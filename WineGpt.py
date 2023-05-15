@@ -5,6 +5,9 @@ import openai
 openai.api_key = API_KEY
 model_id = 'gpt-3.5-turbo'
 
+NUM_QUESTIONS = 6
+NUM_ANSWERS = 4
+
 
 def chatGpt_conversation(conversation):
     response = openai.ChatCompletion.create(
@@ -14,13 +17,13 @@ def chatGpt_conversation(conversation):
     api_usage = response['usage']
 
     # Stop means complete
-    print(response['choices'][0].finish_reason)
-    print(response['choices'][0].index)
+    # print(response['choices'][0].finish_reason)
+    # print(response['choices'][0].index)
 
     conversation.append(
         {'role': response['choices'][0].message.role, 'content': response['choices'][0].message.content})
 
-    print('Total tokens used: ', api_usage['total_tokens'])
+    # print('Total tokens used: ', api_usage['total_tokens'])
 
 
 def answer_question(quiz, profile):
@@ -31,6 +34,7 @@ def answer_question(quiz, profile):
         print(f'[{i}] - {answer}')
 
     choice = int(input('Enter your choice: '))
+    print()
     print(f"You selected:\n\t{answers[choice]}")
 
     profile.append(answers[choice])
@@ -38,9 +42,9 @@ def answer_question(quiz, profile):
 
 def get_question_request():
     return """
-    Give me 3 fun questions, each with 3 possible answers, to ask somebody to try and guess what type of wine personality they have
+    Give me """ + str(NUM_QUESTIONS) + """ fun random non-wine questions, each with """ + str(NUM_ANSWERS) + """ possible answers, to ask somebody to try and guess what type of wine personality they have
     
-    Dont include A, B, C in the answers and dont index the answers.
+    Dont include A, a, B, b, C, c, 1, 2, 3 in the answers.
 
     Give your answer in the following JSON:
     {
@@ -57,9 +61,14 @@ def get_question_request():
 
 
 def get_category_request(quiz_answers):
-    return """Based on these answers determine a fun "Wine Category" personality to associate to the person and 3 wines.
 
-    """ + quiz_answers[0] + "\n" + quiz_answers[1] + "\n" + quiz_answers[2] + "\n" + """
+    answer_str = ""
+    for answer in quiz_answers:
+        answer_str += answer + "\n"
+
+    return """Based on these answers determine a fun "Wine Category" personality to associate to the person and 3 common popular wines.
+
+""" + answer_str + """
 
     Give your answer in the following JSON:
     {
@@ -82,7 +91,9 @@ def main():
 
     question_request = get_question_request()
 
-    print("loading questions...")
+    # print(question_request)
+
+    print("fetching personalised questions...")
 
     # Make request for questions
     conversation.append({'role': 'system', 'content': question_request})
@@ -96,18 +107,13 @@ def main():
     questions = json.loads(conversation[-1]['content'])
     questions = questions['questions']
 
-    print("---------------------------------------------------")
-    answer_question(questions[0], quiz_answers)
-
-    print("---------------------------------------------------")
-    answer_question(questions[1], quiz_answers)
-
-    print("---------------------------------------------------")
-    answer_question(questions[2], quiz_answers)
-
-    print("---------------------------------------------------")
+    for i in range(NUM_QUESTIONS):
+        print("---------------------------------------------------")
+        answer_question(questions[i], quiz_answers)
 
     category_request = get_category_request(quiz_answers)
+
+    # print(category_request)
 
     print()
     print("fetching wine personality...")
@@ -123,20 +129,23 @@ def main():
     category = json.loads(conversation[-1]['content'])
 
     # Display results
-    print("---------------------------------------------------")
+    print("##################################################")
     print()
-    print(category['category'])
+    print(f"\t{category['category']}")
     print()
-    print(category['category_description'])
+    categories = category['category_description'].split('. ')
+    for cat in categories:
+        print(f"- {cat}.")
     print()
-    print("Wines:\n")
 
+    print()
+    print("\tWines for you:")
+    print()
     for wine in category['wines']:
-        print(wine['name'])
+        print(f"{wine['name']} - ({wine['region']}) ")
         print(wine['description'])
-        print(wine['region'])
         print()
-    print("---------------------------------------------------")
+    print("##################################################")
 
 
 if __name__ == '__main__':
