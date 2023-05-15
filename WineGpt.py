@@ -1,3 +1,4 @@
+import time
 import json
 from Credentials import API_KEY
 import openai
@@ -5,7 +6,7 @@ import openai
 openai.api_key = API_KEY
 model_id = 'gpt-3.5-turbo'
 
-NUM_QUESTIONS = 6
+NUM_QUESTIONS = 5
 NUM_ANSWERS = 4
 
 
@@ -42,9 +43,11 @@ def answer_question(quiz, profile):
 
 def get_question_request():
     return """
-    Give me """ + str(NUM_QUESTIONS) + """ fun random non-wine questions, each with """ + str(NUM_ANSWERS) + """ possible answers, to ask somebody to try and guess what type of wine personality they have
+    Give me """ + str(NUM_QUESTIONS) + """ fun random non-wine questions, each with answers up to """ + str(NUM_ANSWERS) + """ possible answers, to ask somebody to try and guess what type of wine personality they have
     
     Dont include A, a, B, b, C, c, 1, 2, 3 in the answers.
+
+    Randomise the number of answers each time.
 
     Give your answer in the following JSON:
     {
@@ -95,9 +98,16 @@ def main():
 
     print("fetching personalised questions...")
 
+    tic = time.perf_counter()
+
     # Make request for questions
     conversation.append({'role': 'system', 'content': question_request})
     chatGpt_conversation(conversation)
+
+    toc = time.perf_counter()
+    print()
+    print(f"Retrieved Questions in {toc - tic:0.4f} seconds")
+    print()
 
     print("DONE...")
     print()
@@ -118,9 +128,16 @@ def main():
     print()
     print("fetching wine personality...")
 
+    tic = time.perf_counter()
+
     # Make request for category
     conversation.append({'role': 'user', 'content': category_request})
     chatGpt_conversation(conversation)
+
+    toc = time.perf_counter()
+    print()
+    print(f"Calculated Category in {toc - tic:0.4f} seconds")
+    print()
 
     print("DONE...")
     print()
@@ -133,7 +150,7 @@ def main():
     print()
     print(f"\t{category['category']}")
     print()
-    categories = category['category_description'].split('. ')
+    categories = category['category_description'].split('.')
     for cat in categories:
         print(f"- {cat}.")
     print()
