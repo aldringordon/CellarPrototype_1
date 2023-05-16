@@ -6,7 +6,7 @@ import openai
 openai.api_key = API_KEY
 model_id = 'gpt-3.5-turbo'
 
-NUM_QUESTIONS = 5
+NUM_QUESTIONS = 3
 NUM_ANSWERS = 4
 
 
@@ -69,7 +69,7 @@ def get_category_request(quiz_answers):
     for answer in quiz_answers:
         answer_str += answer + "\n"
 
-    return """Based on these answers determine a fun "Wine Category" personality to associate to the person and 3 common popular wines.
+    return """Based on these answers determine a fun "Wine Category" personality to associate to the person and 3 common popular Australian or New Zealand wines.
 
 """ + answer_str + """
 
